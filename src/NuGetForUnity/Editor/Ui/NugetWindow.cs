@@ -788,24 +788,54 @@ namespace NugetForUnity.Ui
                 EditorGUILayout.BeginHorizontal();
                 {
                     var oldFontSize = GUI.skin.textField.fontSize;
-                    GUI.skin.textField.fontSize = 25;
-                    onlineSearchTerm = EditorGUILayout.TextField(onlineSearchTerm, GUILayout.Height(30));
+                    var oldColor = GUI.skin.textField.normal.textColor;
+                    GUI.skin.textField.fontSize = 20;
+
+                    if (string.IsNullOrEmpty(onlineSearchTerm))
+                    {
+                        onlineSearchTerm = EditorGUILayout.TextField("Search", GUILayout.Height(30), GUILayout.ExpandWidth(true));
+                    }
+
+                    if (onlineSearchTerm == "Search")
+                    {
+                        var placeholderColor = new Color(0.25f, 0.25f, 0.25f);
+                        GUI.skin.textField.normal.textColor = placeholderColor;
+                        GUI.skin.textField.focused.textColor = placeholderColor;
+                        GUI.skin.textField.hover.textColor = placeholderColor;
+
+                        if (Event.current.type == EventType.MouseDown)
+                        {
+                            GUI.skin.textField.focused.textColor = oldColor;
+                            onlineSearchTerm = "";
+                            GUI.FocusControl("SearchField");
+                        }
+                    }
+                    else
+                    {
+                        GUI.skin.textField.normal.textColor = oldColor;
+                        GUI.skin.textField.focused.textColor = oldColor;
+                        GUI.skin.textField.hover.textColor = oldColor;
+                    }
+
+                    GUI.SetNextControlName("SearchField");
+                    onlineSearchTerm = EditorGUILayout.TextField(onlineSearchTerm, GUILayout.Height(30), GUILayout.ExpandWidth(true));
+
+                    GUI.skin.textField.fontSize = oldFontSize;
+                    GUI.skin.textField.normal.textColor = oldColor;
 
                     if (GUILayout.Button("Search", GUILayout.Width(100), GUILayout.Height(28)))
                     {
                         // the search button emulates the Enter key
                         enterPressed = true;
                     }
-
-                    GUI.skin.textField.fontSize = oldFontSize;
                 }
 
                 EditorGUILayout.EndHorizontal();
 
-                // search only if the enter key is pressed
+                // Search only if the enter key is pressed
                 if (enterPressed)
                 {
-                    // reset the number to skip
+                    // Reset the number to skip
                     numberToSkip = 0;
                     UpdateOnlinePackages();
                 }
