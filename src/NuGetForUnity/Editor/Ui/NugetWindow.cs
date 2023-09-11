@@ -817,7 +817,7 @@ namespace NugetForUnity.Ui
         /// <summary>
         ///     Draws the header which allows filtering the installed list of packages.
         /// </summary>
-        private void DrawInstalledHeader()
+        private void DrawOnlineHeader()
         {
             var headerStyle = GetHeaderStyle();
 
@@ -825,27 +825,11 @@ namespace NugetForUnity.Ui
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    GUILayout.FlexibleSpace();
-
-                    if (InstalledPackagesManager.InstalledPackages.Any())
+                    var showPrereleaseTemp = EditorGUILayout.Toggle("Show Prerelease", showOnlinePrerelease);
+                    if (showPrereleaseTemp != showOnlinePrerelease)
                     {
-                        if (GUILayout.Button("Uninstall All", GUILayout.Width(100)))
-                        {
-                            NugetPackageUninstaller.UninstallAll(InstalledPackagesManager.InstalledPackages.ToList());
-                            UpdateInstalledPackages();
-                            UpdateUpdatePackages();
-                        }
-                    }
-
-                    if (InstalledPackagesManager.InstalledPackages.Any(selectedPackages.Contains))
-                    {
-                        if (GUILayout.Button("Uninstall Selected", GUILayout.Width(120)))
-                        {
-                            NugetPackageUninstaller.UninstallAll(
-                                InstalledPackagesManager.InstalledPackages.Where(selectedPackages.Contains).ToList());
-                            UpdateInstalledPackages();
-                            UpdateUpdatePackages();
-                        }
+                        showOnlinePrerelease = showPrereleaseTemp;
+                        UpdateOnlinePackages();
                     }
 
                     DrawMandatoryButtons();
@@ -853,16 +837,56 @@ namespace NugetForUnity.Ui
 
                 EditorGUILayout.EndHorizontal();
 
+                var enterPressed = Event.current.Equals(Event.KeyboardEvent("return"));
+
                 EditorGUILayout.BeginHorizontal();
                 {
                     var oldFontSize = GUI.skin.textField.fontSize;
-                    GUI.skin.textField.fontSize = 25;
-                    installedSearchTerm = EditorGUILayout.TextField(installedSearchTerm, GUILayout.Height(30));
+                    var oldColor = GUI.skin.textField.normal.textColor;
+                    GUI.skin.textField.fontSize = 20;
+
+                    if (string.IsNullOrEmpty(onlineSearchTerm))
+                    {
+                        onlineSearchTerm = EditorGUILayout.TextField("Search", GUILayout.Height(30));
+                    }
+
+                    if (onlineSearchTerm == "Search")
+                    {
+                        var placeholderColor = new Color(0.25f, 0.25f, 0.25f);
+                        GUI.skin.textField.normal.textColor = placeholderColor;
+                        GUI.skin.textField.focused.textColor = placeholderColor;
+                        GUI.skin.textField.hover.textColor = placeholderColor;
+
+                        if (Event.current.type == EventType.MouseDown)
+                        {
+                            GUI.skin.textField.focused.textColor = oldColor;
+                            onlineSearchTerm = "";
+                            GUI.FocusControl("SearchField");
+                        }
+                    }
+                    else
+                    {
+                        GUI.skin.textField.normal.textColor = oldColor;
+                        GUI.skin.textField.focused.textColor = oldColor;
+                        GUI.skin.textField.hover.textColor = oldColor;
+                    }
+
+                    GUI.SetNextControlName("SearchField");
+                    onlineSearchTerm = EditorGUILayout.TextField(onlineSearchTerm, GUILayout.Height(30));
 
                     GUI.skin.textField.fontSize = oldFontSize;
+                    GUI.skin.textField.normal.textColor = oldColor;
                 }
 
                 EditorGUILayout.EndHorizontal();
+
+                // Search only if the enter key is pressed
+                if (enterPressed)
+                {
+                    // Reset the number to skip
+                    numberToSkip = 0;
+                    UpdateOnlinePackages();
+                }
             }
 
             EditorGUILayout.EndVertical();
